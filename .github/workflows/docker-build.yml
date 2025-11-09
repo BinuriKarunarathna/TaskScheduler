@@ -6,21 +6,26 @@ on:
     paths:
       - "backend/**"
       - "frontend/**"
+      - "db/**"
       - "Dockerfile"
       - "docker-compose.yml"
       - ".github/workflows/docker-build.yml"
+
   pull_request:
     branches: [ "main" ]
     paths:
       - "backend/**"
       - "frontend/**"
+      - "db/**"
       - ".github/workflows/docker-build.yml"
+
   workflow_dispatch:
 
 env:
   DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_USERNAME }}
   FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend
   BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend
+  DB_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/devops-db
 
 jobs:
   docker:
@@ -41,7 +46,7 @@ jobs:
         id: vars
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
-      # No detection/skip: we expect frontend Dockerfile to be present, just like backend
+      # Debug step (optional)
       - name: List frontend directory (debug)
         run: |
           ls -la ./frontend || true
@@ -53,7 +58,7 @@ jobs:
             echo "./frontend/Dockerfile not found";
           fi
 
-      # Build-only on PRs/other branches (no push)
+      # Build-only on PRs or non-main branches (no push)
       - name: Build backend (no push)
         if: github.ref != 'refs/heads/main' || github.event_name != 'push'
         uses: docker/build-push-action@v6
@@ -64,6 +69,17 @@ jobs:
           platforms: linux/amd64
           tags: |
             ${{ env.BACKEND_IMAGE }}:${{ steps.vars.outputs.SHORT_SHA }}
+
+      - name: Build db (no push)
+        if: github.ref != 'refs/heads/main' || github.event_name != 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./db
+          file: ./db/Dockerfile
+          push: false
+          platforms: linux/amd64
+          tags: |
+            ${{ env.DB_IMAGE }}:${{ steps.vars.outputs.SHORT_SHA }}
 
       - name: Build frontend (no push)
         if: github.ref != 'refs/heads/main' || github.event_name != 'push'
@@ -95,6 +111,18 @@ jobs:
           tags: |
             ${{ env.BACKEND_IMAGE }}:${{ steps.vars.outputs.SHORT_SHA }}
             ${{ env.BACKEND_IMAGE }}:latest
+
+      - name: Build & Push db
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./db
+          file: ./db/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.DB_IMAGE }}:${{ steps.vars.outputs.SHORT_SHA }}
+            ${{ env.DB_IMAGE }}:latest
 
       - name: Build & Push frontend
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'

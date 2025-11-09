@@ -2,15 +2,24 @@ version: "3.8"
 
 services:
   db:
-    image: mysql:8
+    build: ./db
+    image: ${DOCKERHUB_USERNAME:-local}/devops-db:latest
     container_name: devops-db
     environment:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: devops
+      MYSQL_USER: devapp
+      MYSQL_PASSWORD: devpass
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   backend:
     build: ./backend
@@ -23,7 +32,8 @@ services:
       DB_PASSWORD: 1234
       DB_NAME: devops
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./backend:/app       # Mount source code for hot reload
       - /app/node_modules    # Keep container node_modules
@@ -38,6 +48,8 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+    environment:
+      - REACT_APP_API_URL=http://backend:5000
     volumes:
       - ./frontend:/app
       - /app/node_modules
