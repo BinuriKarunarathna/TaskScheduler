@@ -39,10 +39,16 @@ jobs:
         id: vars
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
-      - name: Verify frontend Dockerfile exists
+      - name: Check frontend presence
+        id: fe
         run: |
-          ls -la ./frontend
-          test -f ./frontend/Dockerfile
+          echo "Listing frontend directory (may be empty):"
+          ls -la ./frontend || true
+          if [ -f ./frontend/Dockerfile ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
 
       # Build-only on PRs/other branches (no push)
       - name: Build backend (no push)
@@ -57,7 +63,7 @@ jobs:
             ${{ env.BACKEND_IMAGE }}:${{ steps.vars.outputs.SHORT_SHA }}
 
       - name: Build frontend (no push)
-        if: github.ref != 'refs/heads/main' || github.event_name != 'push'
+        if: (github.ref != 'refs/heads/main' || github.event_name != 'push') && steps.fe.outputs.found == 'true'
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
@@ -65,6 +71,10 @@ jobs:
           platforms: linux/amd64
           tags: |
             ${{ env.FRONTEND_IMAGE }}:${{ steps.vars.outputs.SHORT_SHA }}
+
+      - name: Skip frontend (no push)
+        if: (github.ref != 'refs/heads/main' || github.event_name != 'push') && steps.fe.outputs.found != 'true'
+        run: echo "Frontend Dockerfile not found; skipping frontend build. Commit frontend/ with Dockerfile to enable."
 
       # Login and push on main branch pushes
       - name: Log in to Docker Hub
@@ -87,7 +97,7 @@ jobs:
             ${{ env.BACKEND_IMAGE }}:latest
 
       - name: Build & Push frontend
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.fe.outputs.found == 'true'
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
@@ -96,3 +106,7 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}:${{ steps.vars.outputs.SHORT_SHA }}
             ${{ env.FRONTEND_IMAGE }}:latest
+
+      - name: Skip frontend push
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.fe.outputs.found != 'true'
+        run: echo "Frontend Dockerfile not found on main push; backend image pushed, frontend skipped."
