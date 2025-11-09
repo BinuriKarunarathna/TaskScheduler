@@ -26,11 +26,10 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (include submodules)
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: recursive
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -44,7 +43,15 @@ jobs:
 
       # No detection/skip: we expect frontend Dockerfile to be present, just like backend
       - name: List frontend directory (debug)
-        run: ls -la ./frontend || true
+        run: |
+          ls -la ./frontend || true
+          echo "---"
+          if [ -f ./frontend/Dockerfile ]; then
+            echo "Found ./frontend/Dockerfile";
+            head -n 50 ./frontend/Dockerfile;
+          else
+            echo "./frontend/Dockerfile not found";
+          fi
 
       # Build-only on PRs/other branches (no push)
       - name: Build backend (no push)
@@ -63,7 +70,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
-          file: Dockerfile
+          file: ./frontend/Dockerfile
           push: false
           platforms: linux/amd64
           tags: |
@@ -94,7 +101,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
-          file: Dockerfile
+          file: ./frontend/Dockerfile
           push: true
           platforms: linux/amd64
           tags: |
