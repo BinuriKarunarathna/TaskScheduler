@@ -44,10 +44,20 @@ jobs:
         run: |
           echo "Listing frontend directory (may be empty):"
           ls -la ./frontend || true
-          if [ -f ./frontend/Dockerfile ]; then
+          DF=""
+          if [ -f ./frontend/Dockerfile.prod ]; then
+            DF="Dockerfile.prod"
+          elif [ -f ./frontend/Dockerfile ]; then
+            DF="Dockerfile"
+          fi
+          if [ -n "$DF" ]; then
             echo "found=true" >> $GITHUB_OUTPUT
+            echo "dockerfile=$DF" >> $GITHUB_OUTPUT
+            echo "Using frontend dockerfile: $DF"
           else
             echo "found=false" >> $GITHUB_OUTPUT
+            echo "dockerfile=" >> $GITHUB_OUTPUT
+            echo "No frontend Dockerfile found"
           fi
 
       # Build-only on PRs/other branches (no push)
@@ -67,6 +77,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
+          file: ${{ steps.fe.outputs.dockerfile }}
           push: false
           platforms: linux/amd64
           tags: |
@@ -101,6 +112,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
+          file: ${{ steps.fe.outputs.dockerfile }}
           push: true
           platforms: linux/amd64
           tags: |
