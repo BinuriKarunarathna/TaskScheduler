@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8
+    container_name: devops-db
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: devops
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    container_name: devops-backend
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: 1234
+      DB_NAME: devops
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app       # Mount source code for hot reload
+      - /app/node_modules    # Keep container node_modules
+    command: ["npx", "nodemon", "server.js"]  # Auto reload
+    stdin_open: true
+    tty: true
+
+  frontend:
+    build: ./frontend
+    container_name: devops-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: ["npm", "start"]
+    stdin_open: true
+    tty: true
+
+volumes:
+  db_data:
