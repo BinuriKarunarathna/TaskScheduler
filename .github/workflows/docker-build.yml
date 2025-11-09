@@ -18,9 +18,9 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_USERNAME }}
-  FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend
-  BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend
+  DOCKERHUB_NAMESPACE: ${{ secrets.binuri1234 }}
+  FRONTEND_IMAGE: ${{ secrets.binuri1234 }}/devops-frontend
+  BACKEND_IMAGE: ${{ secrets.binuri1234 }}/devops-backend
 
 jobs:
   docker:
