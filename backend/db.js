@@ -20,7 +20,7 @@ const mysql = require("mysql2");
 // 2. localhost (preferred for local dev)
 // 3. 'db' (docker-compose service) if a docker hint env is set
 const explicitHost = process.env.DB_HOST;
-let resolvedHost = explicitHost || "localhost";
+let resolvedHost = explicitHost || "db";
 
 // If no explicit host and running inside docker (heuristic: DOCKER env or absence of ProgramFiles), prefer service name 'db'
 if (!explicitHost && process.env.DOCKER && process.env.DOCKER.toLowerCase() === "true") {
