@@ -8,7 +8,7 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_NAMESPACE = 'binuri'   // or "${env.DOCKERHUB_NAMESPACE}" if set in Jenkins
+        DOCKERHUB_NAMESPACE = 'binuri'
         IMAGE_NAME = 'taskscheduler'
     }
 
