@@ -1,96 +1,77 @@
 pipeline {
     agent any
 
-    // Global options
-    options {
-        disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '5'))
-        timestamps()
-    }
-
-    // Environment variables used throughout the pipeline
     environment {
-        DOCKERHUB_NAMESPACE = 'binuri'   // change to your DockerHub username
-        IMAGE_NAME = 'taskscheduler'
+        IMAGE_NAME = "taskscheduler"
+        DOCKERHUB_NAMESPACE = "binuri"
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 echo '🔄 Cloning repository...'
-                git branch: 'main', url: 'https://github.com/BinuriKarunarathna/TaskScheduler.git'
+                git url: 'https://github.com/BinuriKarunarathna/TaskScheduler.git', branch: 'main'
             }
         }
 
-        stage('Build Backend') {
+        stage('Install Dependencies') {
             steps {
-                wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
-                    echo '⚙️ Building backend with Maven...'
-                    // safe Maven build command (will skip if Maven not installed)
-                    sh 'mvn clean package -DskipTests || echo "Maven not configured yet"'
+                echo '📦 Installing Node.js dependencies...'
+                dir('backend') {
+                    sh 'npm install'
                 }
             }
         }
 
         stage('Run Tests') {
             steps {
-                wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
-                    echo '🧪 Running backend tests...'
-                    sh 'mvn test || echo "No tests configured yet"'
+                echo '🧪 Running tests...'
+                dir('backend') {
+                    // Run your test command (adjust if you use Jest, Mocha, etc.)
+                    sh 'npm test || echo "No tests configured yet"'
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
-                    echo '🐳 Building Docker image...'
-                    sh '''
-                        docker build -t ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest .
-                    '''
+                echo '🐳 Building Docker image...'
+                dir('backend') {
+                    sh 'docker build -t ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest .'
                 }
             }
         }
 
         stage('Push to DockerHub') {
             steps {
-                wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
-                    echo '📦 Pushing Docker image to DockerHub...'
-                    // You must create DockerHub credentials in Jenkins with ID: dockerhub-creds
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-                        sh '''
-                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                            docker push ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest
-                        '''
-                    }
+                echo '📤 Pushing Docker image to DockerHub...'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        docker push ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest
+                    '''
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
-                    echo '🚀 Deploying application...'
-                    sh '''
-                        docker stop ${IMAGE_NAME} || true
-                        docker rm ${IMAGE_NAME} || true
-                        docker run -d -p 8080:8080 --name ${IMAGE_NAME} ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest
-                    '''
-                }
+                echo '🚀 Deploying Docker container...'
+                sh '''
+                    docker stop ${IMAGE_NAME} || true
+                    docker rm ${IMAGE_NAME} || true
+                    docker run -d -p 8080:8080 --name ${IMAGE_NAME} ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest
+                '''
             }
         }
     }
 
     post {
         success {
-            echo '✅ Pipeline executed successfully! Your application has been built and deployed.'
+            echo '✅ Pipeline executed successfully! Your Node.js app has been deployed.'
         }
         failure {
-            echo '❌ Pipeline failed. Please check the console logs for details.'
-        }
-        always {
-            echo '📋 Pipeline execution finished.'
+            echo '❌ Pipeline failed. Please check the logs.'
         }
     }
 }
