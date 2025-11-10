@@ -11,12 +11,26 @@ router.post('/tasks', (req, res) => {
   if (!username) return res.status(400).json({ error: 'Username required' });
   if (!title) return res.status(400).json({ error: 'Title required' });
 
+  // Basic validation for priority
+  const allowedPriorities = ['low','medium','high'];
+  if (priority && !allowedPriorities.includes(priority)) {
+    return res.status(400).json({ error: 'Invalid priority (low|medium|high)' });
+  }
+
+  // Normalize dueDate (allow empty string -> null)
+  const normalizedDueDate = dueDate ? dueDate : null;
+
+  // Correct parameter order: (username, title, description, priority, due_date)
   pool.query(
-    'INSERT INTO tasks (username, title, priority, due_date, description) VALUES (?,?,?,?,?)',
-    [username, title, priority, dueDate || null, description],
+    'INSERT INTO tasks (username, title, description, priority, due_date) VALUES (?,?,?,?,?)',
+    [username, title, description, priority, normalizedDueDate],
     (err, result) => {
       if (err) {
-        console.error('MySQL Task Insert Error:', err);
+        console.error('MySQL Task Insert Error:', err.code, err.message);
+        // Specific MySQL error handling
+        if (err.code === 'ER_TRUNCATED_WRONG_VALUE_FOR_FIELD') {
+          return res.status(400).json({ error: 'Invalid field value (priority or date format)' });
+        }
         return res.status(500).json({ error: 'Failed to create task' });
       }
       res.status(201).json({ id: result.insertId, message: 'Task created' });
