@@ -1,55 +1,81 @@
 pipeline {
     agent any
 
+    // Global options
     options {
-        ansiColor('xterm')
         disableConcurrentBuilds()
         buildDiscarder(logRotator(numToKeepStr: '5'))
+        timestamps()
     }
 
+    // Environment variables used throughout the pipeline
     environment {
-        DOCKERHUB_NAMESPACE = 'binuri'
+        DOCKERHUB_NAMESPACE = 'binuri'   // change to your DockerHub username
         IMAGE_NAME = 'taskscheduler'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                echo 'Cloning repository...'
+                echo '🔄 Cloning repository...'
                 git branch: 'main', url: 'https://github.com/BinuriKarunarathna/TaskScheduler.git'
             }
         }
 
-        stage('Build') {
+        stage('Build Backend') {
             steps {
-                echo 'Building project...'
-                sh 'mvn clean package -DskipTests || echo "Maven not configured yet"'
+                wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+                    echo '⚙️ Building backend with Maven...'
+                    // safe Maven build command (will skip if Maven not installed)
+                    sh 'mvn clean package -DskipTests || echo "Maven not configured yet"'
+                }
             }
         }
 
-        stage('Test') {
+        stage('Run Tests') {
             steps {
-                echo 'Running tests...'
-                sh 'mvn test || echo "No tests configured yet"'
+                wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+                    echo '🧪 Running backend tests...'
+                    sh 'mvn test || echo "No tests configured yet"'
+                }
             }
         }
 
-        stage('Docker Build') {
+        stage('Build Docker Image') {
             steps {
-                echo 'Building Docker image...'
-                sh '''
-                    docker build -t ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest .
-                '''
+                wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+                    echo '🐳 Building Docker image...'
+                    sh '''
+                        docker build -t ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest .
+                    '''
+                }
             }
         }
 
         stage('Push to DockerHub') {
             steps {
-                echo 'Pushing Docker image to DockerHub...'
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+                wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+                    echo '📦 Pushing Docker image to DockerHub...'
+                    // You must create DockerHub credentials in Jenkins with ID: dockerhub-creds
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+                        sh '''
+                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                            docker push ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+                    echo '🚀 Deploying application...'
                     sh '''
-                        echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                        docker push ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest
+                        docker stop ${IMAGE_NAME} || true
+                        docker rm ${IMAGE_NAME} || true
+                        docker run -d -p 8080:8080 --name ${IMAGE_NAME} ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest
                     '''
                 }
             }
@@ -58,10 +84,13 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline executed successfully!'
+            echo '✅ Pipeline executed successfully! Your application has been built and deployed.'
         }
         failure {
-            echo '❌ Pipeline failed. Please check console logs.'
+            echo '❌ Pipeline failed. Please check the console logs for details.'
+        }
+        always {
+            echo '📋 Pipeline execution finished.'
         }
     }
 }
