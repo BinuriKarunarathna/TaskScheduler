@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "taskscheduler"
-        DOCKERHUB_NAMESPACE = "binuri"
+        DOCKERHUB_NAMESPACE = "binuri1234"
     }
 
     stages {
