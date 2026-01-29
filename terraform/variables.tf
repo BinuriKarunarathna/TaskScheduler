@@ -1,7 +1,9 @@
 variable "region" {
   description = "AWS region"
   type        = string
-  default     = "eu-north-1"
+  default     = "ap-south-1"
+  
+
 }
 
 variable "project_name" {
@@ -25,5 +27,5 @@ variable "db_password" {
 variable "key_name" {
   description = "Name of the SSH key pair"
   type        = string
-  default     = "my-keypair"
+  default     = "jenkins-key"
 }

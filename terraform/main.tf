@@ -1,3 +1,18 @@
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 provider "aws" {
   region = var.region
 }
@@ -241,7 +256,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 
 # 🔹 EC2 Application Server
 resource "aws_instance" "app_server" {
-  ami           = "ami-001db41e42e1ff69f" # Amazon Linux 2 (eu-north-1)
+  ami           = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
   key_name      = var.key_name
   subnet_id     = aws_subnet.public_a.id
