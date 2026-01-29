@@ -2,6 +2,12 @@ provider "aws" {
   region = var.region
 }
 
+# 🔹 CloudWatch Log Group for Application Logs
+resource "aws_cloudwatch_log_group" "app_logs" {
+  name              = "/aws/ec2/${var.project_name}/app-logs"
+  retention_in_days = 7
+}
+
 # 🔹 ECR Repositories
 resource "aws_ecr_repository" "frontend" {
   name                 = "${var.project_name}-frontend"
@@ -162,6 +168,23 @@ resource "aws_db_subnet_group" "main" {
   }
 }
 
+resource "aws_iam_role" "rds_monitoring" {
+  name = "${var.project_name}-rds-monitoring-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = { Service = "monitoring.rds.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "rds_monitoring_policy" {
+  role       = aws_iam_role.rds_monitoring.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+}
+
 resource "aws_db_instance" "mysql" {
   allocated_storage      = 20
   db_name                = "devops"
@@ -175,6 +198,8 @@ resource "aws_db_instance" "mysql" {
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
   publicly_accessible    = false
+  monitoring_interval    = 60
+  monitoring_role_arn    = aws_iam_role.rds_monitoring.arn
 
   tags = {
     Name = "${var.project_name}-rds"

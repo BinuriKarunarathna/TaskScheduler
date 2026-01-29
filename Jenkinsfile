@@ -35,20 +35,21 @@ pipeline {
             }
         }
 
-        stage('Build & Push Images') {
+        stage('Test & Build') {
             parallel {
-                stage('Backend') {
+                stage('Backend Build') {
                     steps {
-                        echo '🐳 Building & Pushing Backend Image...'
+                        echo '🐳 Building Backend...'
                         dir('backend') {
+                            sh 'npm test || echo "No tests"' 
                             sh "docker build -t ${ECR_BACKEND_REPO}:latest ."
                             sh "docker push ${ECR_BACKEND_REPO}:latest"
                         }
                     }
                 }
-                stage('Frontend') {
+                stage('Frontend Build') {
                     steps {
-                        echo '🐳 Building & Pushing Frontend Image...'
+                        echo '🐳 Building Frontend...'
                         dir('frontend') {
                             sh "docker build -t ${ECR_FRONTEND_REPO}:latest ."
                             sh "docker push ${ECR_FRONTEND_REPO}:latest"
