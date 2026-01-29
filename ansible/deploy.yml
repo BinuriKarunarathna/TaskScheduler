@@ -28,45 +28,29 @@
       shell: "aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin {{ backend_image.split('/')[0] }}"
 
     - name: Pull Backend Image
-      docker_image:
-        name: "{{ backend_image }}"
-        source: pull
+      shell: "docker pull {{ backend_image }}"
 
     - name: Pull Frontend Image
-      docker_image:
-        name: "{{ frontend_image }}"
-        source: pull
+      shell: "docker pull {{ frontend_image }}"
 
     - name: Stop and remove existing containers if any
       shell: "docker stop backend frontend || true && docker rm backend frontend || true"
 
     - name: Create Docker network
-      docker_network:
-        name: devops-net
+      shell: "docker network create devops-net || true"
 
     - name: Run Backend Container
-      docker_container:
-        name: backend
-        image: "{{ backend_image }}"
-        state: started
-        restart_policy: always
-        networks:
-          - name: devops-net
-        ports:
-          - "5000:5000"
-        env:
-          DB_HOST: "{{ db_host }}"
-          DB_USER: "{{ db_user }}"
-          DB_PASSWORD: "{{ db_password }}"
-          DB_NAME: "{{ db_name }}"
+      shell: |
+        docker run -d --name backend --network devops-net --restart always \
+        -p 5000:5000 \
+        -e DB_HOST={{ db_host }} \
+        -e DB_USER={{ db_user }} \
+        -e DB_PASSWORD={{ db_password }} \
+        -e DB_NAME={{ db_name }} \
+        {{ backend_image }}
 
     - name: Run Frontend Container
-      docker_container:
-        name: frontend
-        image: "{{ frontend_image }}"
-        state: started
-        restart_policy: always
-        networks:
-          - name: devops-net
-        ports:
-          - "80:80"
+      shell: |
+        docker run -d --name frontend --network devops-net --restart always \
+        -p 80:80 \
+        {{ frontend_image }}

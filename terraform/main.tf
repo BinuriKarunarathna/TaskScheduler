@@ -136,13 +136,12 @@ resource "aws_security_group" "db_sg" {
     description     = "Allow app server to access MySQL"
   }
 
-  # 🚀 ADD THIS for your Jenkins Pipeline to work:
   ingress {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = ["YOUR_JENKINS_IP/32"] 
-    description = "Allow Jenkins to initialize DB"
+    cidr_blocks = ["0.0.0.0/0"] 
+    description = "Allow Jenkins to initialize DB (Temporary)"
   }
 
   egress {

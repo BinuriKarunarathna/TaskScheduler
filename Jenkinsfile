@@ -18,6 +18,16 @@ pipeline {
             }
         }
 
+        stage('Terraform Plan & Apply') {
+            steps {
+                echo '🏗️ Provisioning Infrastructure...'
+                dir('terraform') {
+                    sh 'terraform init'
+                    sh "terraform apply -auto-approve -var='db_username=${TF_VAR_db_username}' -var='db_password=${TF_VAR_db_password}'"
+                }
+            }
+        }
+
         stage('Login to AWS ECR') {
             steps {
                 echo '🔑 Logging in to AWS ECR...'
@@ -48,16 +58,6 @@ pipeline {
             }
         }
 
-        stage('Terraform Plan & Apply') {
-            steps {
-                echo '🏗️ Provisioning Infrastructure...'
-                dir('terraform') {
-                    sh 'terraform init'
-                    sh "terraform apply -auto-approve -var='db_username=${TF_VAR_db_username}' -var='db_password=${TF_VAR_db_password}'"
-                }
-            }
-        }
-
         stage('Initialize Database') {
             steps {
                 echo '🗄️ Initializing DB Schema...'
@@ -83,8 +83,13 @@ pipeline {
                     
                     dir('ansible') {
                         // Running with Ansible to pull and start containers
-                        // This assumes the Ansible playbook exists
-                        sh "ansible-playbook -i inventory.ini deploy.yml -e 'backend_image=${ECR_BACKEND_REPO}:latest' -e 'frontend_image=${ECR_FRONTEND_REPO}:latest' -e 'db_host=${rdsEndpoint}' -e 'db_user=${TF_VAR_db_username}' -e 'db_password=${TF_VAR_db_password}'"
+                        sh "ansible-playbook -i inventory.ini deploy.yml \
+                            --extra-vars 'backend_image=${ECR_BACKEND_REPO}:latest \
+                            frontend_image=${ECR_FRONTEND_REPO}:latest \
+                            db_host=${rdsEndpoint} \
+                            db_user=${TF_VAR_db_username} \
+                            db_password=${TF_VAR_db_password}' \
+                            --ssh-common-args='-o StrictHostKeyChecking=no'"
                     }
                 }
             }
