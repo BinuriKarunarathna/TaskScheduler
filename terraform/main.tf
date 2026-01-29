@@ -90,23 +90,17 @@ resource "aws_route_table_association" "b" {
 # 🔹 Security Groups
 resource "aws_security_group" "app_sg" {
   name        = "${var.project_name}-app-sg"
-  description = "Allow inbound traffic for app"
   vpc_id      = aws_vpc.main.id
 
+  # SSH Access
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"] 
   }
 
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
+  # Frontend (React/Vue usually 3000)
   ingress {
     from_port   = 3000
     to_port     = 3000
@@ -114,6 +108,7 @@ resource "aws_security_group" "app_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Backend API (Node/Express usually 5000)
   ingress {
     from_port   = 5000
     to_port     = 5000
@@ -130,15 +125,24 @@ resource "aws_security_group" "app_sg" {
 }
 
 resource "aws_security_group" "db_sg" {
-  name        = "${var.project_name}-db-sg"
-  description = "Allow traffic from app to DB"
-  vpc_id      = aws_vpc.main.id
+  name   = "${var.project_name}-db-sg"
+  vpc_id = aws_vpc.main.id
 
   ingress {
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
     security_groups = [aws_security_group.app_sg.id]
+    description     = "Allow app server to access MySQL"
+  }
+
+  # 🚀 ADD THIS for your Jenkins Pipeline to work:
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["YOUR_JENKINS_IP/32"] 
+    description = "Allow Jenkins to initialize DB"
   }
 
   egress {
