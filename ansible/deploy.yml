@@ -1,0 +1,72 @@
+- name: Deploy Application Containers
+  hosts: aws_ec2
+  become: yes
+  vars:
+    # Variables passed from Jenkins
+    backend_image: ""
+    frontend_image: ""
+    db_host: ""
+    db_user: ""
+    db_password: ""
+    db_name: "devops"
+
+  tasks:
+    - name: Ensure Docker and AWS CLI are installed
+      yum:
+        name: 
+          - docker
+          - aws-cli
+        state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Login to ECR
+      shell: "aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin {{ backend_image.split('/')[0] }}"
+
+    - name: Pull Backend Image
+      docker_image:
+        name: "{{ backend_image }}"
+        source: pull
+
+    - name: Pull Frontend Image
+      docker_image:
+        name: "{{ frontend_image }}"
+        source: pull
+
+    - name: Stop and remove existing containers if any
+      shell: "docker stop backend frontend || true && docker rm backend frontend || true"
+
+    - name: Create Docker network
+      docker_network:
+        name: devops-net
+
+    - name: Run Backend Container
+      docker_container:
+        name: backend
+        image: "{{ backend_image }}"
+        state: started
+        restart_policy: always
+        networks:
+          - name: devops-net
+        ports:
+          - "5000:5000"
+        env:
+          DB_HOST: "{{ db_host }}"
+          DB_USER: "{{ db_user }}"
+          DB_PASSWORD: "{{ db_password }}"
+          DB_NAME: "{{ db_name }}"
+
+    - name: Run Frontend Container
+      docker_container:
+        name: frontend
+        image: "{{ frontend_image }}"
+        state: started
+        restart_policy: always
+        networks:
+          - name: devops-net
+        ports:
+          - "80:80"

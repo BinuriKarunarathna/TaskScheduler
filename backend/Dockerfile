@@ -1,21 +1,22 @@
-# Use Node.js 20
-FROM node:22
+# Stage 1: Build
+FROM node:22-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
 COPY package*.json ./
+RUN npm install --production
 
-# Install dependencies
-RUN npm install
-RUN npm install -g nodemon
-
-# Copy backend code
 COPY . .
 
-# Expose port
+# Stage 2: Runtime
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY --from=build /app ./
+
 EXPOSE 5000
 
-# Command for hot reload
-CMD ["npx", "nodemon", "server.js"]
+ENV NODE_ENV=production
+
+CMD ["node", "server.js"]

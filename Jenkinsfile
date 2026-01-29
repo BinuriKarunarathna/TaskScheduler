@@ -2,75 +2,101 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "taskscheduler"
-        DOCKERHUB_NAMESPACE = "binuri1234"
+        AWS_REGION          = "eu-north-1"
+        AWS_ACCOUNT_ID      = credentials('aws-account-id') // ID: 123456789012
+        ECR_BACKEND_REPO   = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops-project-backend"
+        ECR_FRONTEND_REPO  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops-project-frontend"
+        TF_VAR_db_username = credentials('db-username')
+        TF_VAR_db_password = credentials('db-password')
     }
 
     stages {
         stage('Checkout') {
             steps {
                 echo '🔄 Cloning repository...'
-                git url: 'https://github.com/BinuriKarunarathna/TaskScheduler.git', branch: 'main'
+                checkout scm
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Login to AWS ECR') {
             steps {
-                echo '📦 Installing Node.js dependencies...'
-                dir('backend') {
-                    sh 'npm install'
+                echo '🔑 Logging in to AWS ECR...'
+                sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+            }
+        }
+
+        stage('Build & Push Images') {
+            parallel {
+                stage('Backend') {
+                    steps {
+                        echo '🐳 Building & Pushing Backend Image...'
+                        dir('backend') {
+                            sh "docker build -t ${ECR_BACKEND_REPO}:latest ."
+                            sh "docker push ${ECR_BACKEND_REPO}:latest"
+                        }
+                    }
+                }
+                stage('Frontend') {
+                    steps {
+                        echo '🐳 Building & Pushing Frontend Image...'
+                        dir('frontend') {
+                            sh "docker build -t ${ECR_FRONTEND_REPO}:latest ."
+                            sh "docker push ${ECR_FRONTEND_REPO}:latest"
+                        }
+                    }
                 }
             }
         }
 
-        stage('Run Tests') {
+        stage('Terraform Plan & Apply') {
             steps {
-                echo '🧪 Running tests...'
-                dir('backend') {
-                    sh 'npm test || echo "No tests configured yet"'
+                echo '🏗️ Provisioning Infrastructure...'
+                dir('terraform') {
+                    sh 'terraform init'
+                    sh "terraform apply -auto-approve -var='db_username=${TF_VAR_db_username}' -var='db_password=${TF_VAR_db_password}'"
                 }
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Initialize Database') {
             steps {
-                echo '🐳 Building Docker image...'
-                dir('backend') {
-                    sh 'docker build -t ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest .'
+                echo '🗄️ Initializing DB Schema...'
+                script {
+                    def rdsEndpoint = sh(script: "cd terraform && terraform output -raw rds_endpoint", returnStdout: true).trim().split(':')[0]
+                    dir('db') {
+                        // Use a temporary docker container to run the SQL script
+                        sh "docker run --rm -v \$(pwd)/init:/init mysql:8 mysql -h ${rdsEndpoint} -u ${TF_VAR_db_username} -p${TF_VAR_db_password} devops < init/init.sql"
+                    }
                 }
             }
         }
 
-        stage('Push to DockerHub') {
+        stage('Deploy to EC2') {
             steps {
-                echo '📤 Pushing Docker image to DockerHub...'
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                    sh '''
-                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                        docker push ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest
-                    '''
+                echo '🚀 Deploying Application Containers...'
+                script {
+                    def appIp = sh(script: "cd terraform && terraform output -raw app_server_public_ip", returnStdout: true).trim()
+                    def rdsEndpoint = sh(script: "cd terraform && terraform output -raw rds_endpoint", returnStdout: true).trim().split(':')[0]
+                    
+                    // Update Ansible inventory dynamically
+                    sh "echo '[aws_ec2]\n${appIp} ansible_user=ec2-user ansible_ssh_private_key_file=/var/lib/jenkins/my-keypair.pem' > ansible/inventory.ini"
+                    
+                    dir('ansible') {
+                        // Running with Ansible to pull and start containers
+                        // This assumes the Ansible playbook exists
+                        sh "ansible-playbook -i inventory.ini deploy.yml -e 'backend_image=${ECR_BACKEND_REPO}:latest' -e 'frontend_image=${ECR_FRONTEND_REPO}:latest' -e 'db_host=${rdsEndpoint}' -e 'db_user=${TF_VAR_db_username}' -e 'db_password=${TF_VAR_db_password}'"
+                    }
                 }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo '🚀 Deploying Docker container...'
-                sh '''
-                    docker stop ${IMAGE_NAME} || true
-                    docker rm ${IMAGE_NAME} || true
-                    docker run -d -p 3000:8080 --name ${IMAGE_NAME} ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest
-                '''
             }
         }
     }
 
     post {
         success {
-            echo '✅ Pipeline executed successfully! Your Node.js app has been deployed.'
+            echo '✅ Pipeline executed successfully!'
         }
         failure {
-            echo '❌ Pipeline failed. Please check the logs.'
+            echo '❌ Pipeline failed.'
         }
     }
 }

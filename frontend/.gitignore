@@ -21,3 +21,24 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# AWS keys
+.aws/
+*.pem
+
+# Environment files
+.env
+.env.*
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# Docker artifacts
+*.local

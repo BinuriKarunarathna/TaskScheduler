@@ -1,0 +1,27 @@
+# Set default behavior to automatically normalize line endings.
+* text=auto
+
+# Force LF for shell scripts and Jenkinsfiles (required for Linux/Jenkins)
+*.sh text eol=lf
+Jenkinsfile text eol=lf
+Dockerfile* text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.ini text eol=lf
+
+# Explicitly declare text files to be normalized and converted to native line endings on checkout.
+*.js text
+*.jsx text
+*.json text
+*.css text
+*.html text
+*.md text
+*.sql text
+*.tf text
+
+# Binary files (don't touch)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary

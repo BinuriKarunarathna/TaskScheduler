@@ -1,0 +1,29 @@
+# Dependency Directories
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# AWS CLI Installer files (The cause of your warnings)
+aws/dist/
+aws/install
+aws/README.md
+aws/THIRD_PARTY_LICENSES
+
+# Terraform state and locks
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# IDE and OS files
+.vscode/
+.DS_Store
+Thumbs.db
+dist/
+build/
+
+# Secrets (IMPORTANT)
+.env
+*.pem
+*.key
+terraform.tfvars
