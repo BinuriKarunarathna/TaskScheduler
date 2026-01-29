@@ -1,20 +1,21 @@
 pipeline {
     agent any
 
-    environment {
-        AWS_REGION = "ap-south-1"
-        AWS_ACCOUNT_ID = "808985146141"
-
-        BACKEND_REPO = "devops-project-backend"
-        FRONTEND_REPO = "devops-project-frontend"
-
-        ECR_BACKEND = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_REPO}"
-        ECR_FRONTEND = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_REPO}"
-    }
-
     options {
         timestamps()
         disableConcurrentBuilds()
+        skipDefaultCheckout(true)
+    }
+
+    environment {
+        AWS_REGION     = "ap-south-1"
+        AWS_ACCOUNT_ID = "808985146141"
+
+        BACKEND_REPO  = "devops-project-backend"
+        FRONTEND_REPO = "devops-project-frontend"
+
+        ECR_BACKEND  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_REPO}"
+        ECR_FRONTEND = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_REPO}"
     }
 
     stages {
@@ -28,8 +29,8 @@ pipeline {
         stage('Login to AWS ECR') {
             steps {
                 sh '''
-                aws ecr get-login-password --region $AWS_REGION |
-                docker login --username AWS --password-stdin \
+                aws ecr get-login-password --region $AWS_REGION \
+                | docker login --username AWS --password-stdin \
                 $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
                 '''
             }
@@ -41,6 +42,8 @@ pipeline {
                 stage('Backend') {
                     steps {
                         sh '''
+                        echo "🔹 Building Backend..."
+
                         docker pull $ECR_BACKEND:latest || true
 
                         docker build \
@@ -55,11 +58,20 @@ pipeline {
                 stage('Frontend') {
                     steps {
                         sh '''
+                        echo "🔹 Building Frontend..."
+
+                        # Keep Jenkins alive during heavy React build
+                        ( while true; do echo "Frontend build still running..."; sleep 30; done ) &
+                        KEEPALIVE_PID=$!
+
                         docker pull $ECR_FRONTEND:latest || true
 
                         docker build \
+                          --memory=512m \
                           --cache-from $ECR_FRONTEND:latest \
                           -t $ECR_FRONTEND:latest ./frontend
+
+                        kill $KEEPALIVE_PID
 
                         docker push $ECR_FRONTEND:latest
                         '''

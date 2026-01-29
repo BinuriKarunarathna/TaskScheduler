@@ -51,4 +51,71 @@ router.get('/tasks', (req, res) => {
   });
 });
 
+// Get a single task
+router.get('/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  const username = req.query.username;
+  if (!username) return res.status(400).json({ error: 'username query param required' });
+
+  pool.query('SELECT * FROM tasks WHERE id=? AND username=?', [id, username], (err, rows) => {
+    if (err) {
+      console.error('MySQL Task Fetch Error:', err);
+      return res.status(500).json({ error: 'Failed to fetch task' });
+    }
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    res.json(rows[0]);
+  });
+});
+
+// Update a task
+router.put('/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  const { title, dueDate, priority, description, status } = req.body;
+  const username = req.body.username || req.headers['x-username'];
+
+  if (!username) return res.status(400).json({ error: 'Username required' });
+
+  const normalizedDueDate = dueDate ? dueDate : null;
+
+  pool.query(
+    'UPDATE tasks SET title=?, due_date=?, priority=?, description=?, status=? WHERE id=? AND username=?',
+    [title, normalizedDueDate, priority, description, status, id, username],
+    (err, result) => {
+      if (err) {
+        console.error('MySQL Task Update Error:', err);
+        return res.status(500).json({ error: 'Failed to update task' });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Task not found or unauthorized' });
+      }
+      res.json({ message: 'Task updated successfully' });
+    }
+  );
+});
+
+// Delete a task
+router.delete('/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  const username = req.query.username || req.headers['x-username'];
+
+  if (!username) return res.status(400).json({ error: 'Username required' });
+
+  pool.query(
+    'DELETE FROM tasks WHERE id=? AND username=?',
+    [id, username],
+    (err, result) => {
+      if (err) {
+        console.error('MySQL Task Delete Error:', err);
+        return res.status(500).json({ error: 'Failed to delete task' });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Task not found or unauthorized' });
+      }
+      res.json({ message: 'Task deleted successfully' });
+    }
+  );
+});
+
 module.exports = router;
