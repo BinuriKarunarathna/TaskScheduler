@@ -162,20 +162,20 @@ pipeline {
                 '''
             }
         }
-        stage('Deploy to EC2 (CD)') {
+        stage('Deploy to EC2') {
             steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent(['ec2-user']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} << 'EOF'
-                        cd ${DEPLOY_PATH}
-                        docker-compose pull
+                    ssh -o StrictHostKeyChecking=no ec2-user@13.235.8.85 '
+                        cd /home/ec2-user/TaskScheduler &&
+                        docker-compose pull &&
                         docker-compose up -d
-                        docker ps
-                    EOF
+                    '
                     """
                 }
             }
         }
+
     }
 
     post {
