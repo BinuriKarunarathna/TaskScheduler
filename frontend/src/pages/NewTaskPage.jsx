@@ -38,7 +38,7 @@ const NewTaskPage = () => {
   };
 
   return (
-    <div className="task-form">
+    <div className="task-form" style={{ maxWidth: '1000px', width: '95%', margin: '36px auto 80px', padding: '0 20px 40px' }}>
       {/* <header className="dash-header" style={{ paddingTop: 0 }}>
         <div>
           <h1>Create a New Task <span className="wave">📝</span></h1>
@@ -47,7 +47,7 @@ const NewTaskPage = () => {
         <button className="btn-outline" onClick={() => navigate(-1)}>Back</button>
       </header> */}
 
-      <form onSubmit={onSubmit}>
+      <form onSubmit={onSubmit} style={{ padding: '40px 48px 50px', gap: '28px' }}>
         <div className="form-row">
           <label htmlFor="title">Title</label>
           <input id="title" name="title" type="text" value={form.title} onChange={onChange} placeholder="e.g., Finish report" required />
