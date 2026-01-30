@@ -108,6 +108,10 @@ pipeline {
         BACKEND_IMAGE  = 'taskmanager-backend'
         FRONTEND_IMAGE = 'taskmanager-frontend'
     }
+    DEPLOY_USER = 'ec2-user'
+    DEPLOY_HOST = '13.235.8.85'   // App EC2 public IP
+    DEPLOY_PATH = '/home/ec2-user/TaskScheduler'
+
 
     stages {
 
@@ -155,6 +159,20 @@ pipeline {
                 docker build -t %DOCKERHUB_USER%/%FRONTEND_IMAGE%:latest frontend
                 docker push %DOCKERHUB_USER%/%FRONTEND_IMAGE%:latest
                 '''
+            }
+        }
+        stage('Deploy to EC2 (CD)') {
+            steps {
+                sshagent(credentials: ['ec2-ssh-key']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} << 'EOF'
+                        cd ${DEPLOY_PATH}
+                        docker-compose pull
+                        docker-compose up -d
+                        docker ps
+                    EOF
+                    """
+                }
             }
         }
     }
