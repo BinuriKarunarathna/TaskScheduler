@@ -1,17 +1,20 @@
 const mysql = require("mysql2");
 
+// Ensure environment variables are loaded
+require('dotenv').config();
+
 // Resolve DB host dynamically - prefer environment variable
-const resolvedHost = process.env.DB_HOST || "localhost";
+const resolvedHost = process.env.DB_HOST || "db";
 
 console.log(`🔍 DB Configuration:`);
 console.log(`   Host: ${resolvedHost}`);
-console.log(`   User: ${process.env.DB_USER || "root"}`);
-console.log(`   DB:   ${process.env.DB_NAME || "devops"}`);
+console.log(`   User: ${process.env.DB_USER}`);
+console.log(`   DB:   ${process.env.DB_NAME}`);
 
 const pool = mysql.createPool({
   host: resolvedHost,
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "1234",
+  user: process.env.DB_USER || "devapp",
+  password: process.env.DB_PASSWORD || "devpass",
   database: process.env.DB_NAME || "devops",
   waitForConnections: true,
   connectionLimit: 10,

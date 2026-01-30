@@ -26,14 +26,11 @@ services:
     ports:
       - "5000:5000"
     environment:
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_USER: devapp
-      DB_PASSWORD: devpass
-      DB_NAME: devops
-    depends_on:
-      db:
-        condition: service_healthy
+      # Use the EC2 Public IP or RDS Endpoint here
+      - DB_HOST=13.235.8.85
+      - DB_USER=root
+      - DB_PASSWORD=1234
+      - DB_NAME=devops
     restart: always
 
   frontend:

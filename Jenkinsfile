@@ -22,7 +22,7 @@ pipeline {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'dockerhub-creds',   // ✅ FIXED
+                        credentialsId: 'dockerhub-creds',
                         usernameVariable: 'DOCKER_USERNAME',
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
@@ -44,11 +44,13 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@$EC2_HOST '
+                    ssh -o StrictHostKeyChecking=no ec2-user@$EC2_HOST "
                         cd ~/TaskScheduler &&
+                        git pull origin main &&
+                        docker-compose down &&
                         docker-compose pull &&
                         docker-compose up -d
-                    '
+                    "
                     """
                 }
             }
