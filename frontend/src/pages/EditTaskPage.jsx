@@ -75,29 +75,43 @@ const EditTaskPage = () => {
   if (loading) return <div className="task-form" style={{ maxWidth: '1000px', width: '95%', margin: '36px auto 80px' }}><p>Loading task details...</p></div>;
 
   return (
-    <div className="task-form" style={{ maxWidth: '1000px', width: '95%', margin: '36px auto 80px', padding: '0 20px 40px' }}>
-      <header className="dash-header" style={{ paddingTop: 0 }}>
-        <div>
-          <h1>Edit Task <span className="wave">✏️</span></h1>
-          <p className="muted">Modify the details of your task.</p>
+    <div className="task-form" style={{ 
+      maxWidth: '750px', 
+      width: '90%', 
+      margin: '40px auto', 
+      padding: '0', 
+      display: 'flex', 
+      flexDirection: 'column' 
+    }}>
+      <form onSubmit={onSubmit} style={{ 
+        padding: '50px 60px', 
+        borderRadius: '32px', 
+        background: 'rgba(255, 255, 255, 0.95)', 
+        backdropFilter: 'blur(10px)',
+        boxShadow: '0 25px 50px rgba(111, 79, 62, 0.15)',
+        border: '1px solid rgba(255, 255, 255, 0.6)',
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '24px' 
+      }}>
+        <div style={{ marginBottom: '10px' }}>
+          <h2 style={{ margin: 0, color: '#6f4f3e', fontSize: '1.8rem', fontWeight: '800' }}>Edit Task</h2>
+          <p style={{ margin: '5px 0 0 0', color: '#8c6b5d', fontSize: '0.95rem' }}>Update your task details.</p>
         </div>
-        <button className="btn-outline" onClick={() => navigate(-1)}>Back</button>
-      </header>
 
-      <form onSubmit={onSubmit} style={{ padding: '40px 48px 50px', gap: '28px' }}>
-        <div className="form-row">
-          <label htmlFor="title">Title</label>
-          <input id="title" name="title" type="text" value={form.title} onChange={onChange} required />
+        <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label htmlFor="title" style={{ fontSize: '0.8rem', fontWeight: '700', color: '#b28d7f', textTransform: 'uppercase', letterSpacing: '1px' }}>Title</label>
+          <input id="title" name="title" type="text" value={form.title} onChange={onChange} required style={{ width: '100%', boxSizing: 'border-box', padding: '14px 18px', borderRadius: '15px', border: '1px solid #e2d5c8', background: '#fff' }} />
         </div>
 
-        <div className="form-grid">
-          <div className="form-row">
-            <label htmlFor="dueDate">Due date</label>
-            <input id="dueDate" name="dueDate" type="date" value={form.dueDate} onChange={onChange} />
+        <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+          <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '0' }}>
+            <label htmlFor="dueDate" style={{ fontSize: '0.8rem', fontWeight: '700', color: '#b28d7f', textTransform: 'uppercase', letterSpacing: '1px' }}>Due date</label>
+            <input id="dueDate" name="dueDate" type="date" value={form.dueDate} onChange={onChange} style={{ width: '100%', boxSizing: 'border-box', padding: '14px 18px', borderRadius: '15px', border: '1px solid #e2d5c8', background: '#fff' }} />
           </div>
-          <div className="form-row">
-            <label htmlFor="priority">Priority</label>
-            <select id="priority" name="priority" value={form.priority} onChange={onChange}>
+          <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '0' }}>
+            <label htmlFor="priority" style={{ fontSize: '0.8rem', fontWeight: '700', color: '#b28d7f', textTransform: 'uppercase', letterSpacing: '1px' }}>Priority</label>
+            <select id="priority" name="priority" value={form.priority} onChange={onChange} style={{ width: '100%', boxSizing: 'border-box', padding: '14px 18px', borderRadius: '15px', border: '1px solid #e2d5c8', background: '#fff' }}>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
@@ -105,25 +119,37 @@ const EditTaskPage = () => {
           </div>
         </div>
 
-        <div className="form-row">
-          <label htmlFor="status">Status</label>
-          <select id="status" name="status" value={form.status} onChange={onChange}>
+        <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label htmlFor="status" style={{ fontSize: '0.8rem', fontWeight: '700', color: '#b28d7f', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</label>
+          <select id="status" name="status" value={form.status} onChange={onChange} style={{ width: '100%', boxSizing: 'border-box', padding: '14px 18px', borderRadius: '15px', border: '1px solid #e2d5c8', background: '#fff' }}>
             <option value="pending">Pending</option>
             <option value="in_progress">In Progress</option>
             <option value="completed">Completed</option>
           </select>
         </div>
 
-        <div className="form-row">
-          <label htmlFor="description">Description</label>
-          <textarea id="description" name="description" rows="4" value={form.description} onChange={onChange} />
+        <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label htmlFor="description" style={{ fontSize: '0.8rem', fontWeight: '700', color: '#b28d7f', textTransform: 'uppercase', letterSpacing: '1px' }}>Description</label>
+          <textarea id="description" name="description" rows="4" value={form.description} onChange={onChange} style={{ width: '100%', boxSizing: 'border-box', padding: '14px 18px', borderRadius: '15px', border: '1px solid #e2d5c8', background: '#fff', minHeight: '100px' }} />
         </div>
 
-        {message && <p className="muted" role="status">{message}</p>}
+        {message && <p style={{ color: '#6f4f3e', fontWeight: '600', textAlign: 'center' }} role="status">{message}</p>}
 
-        <div className="form-actions">
-          <button type="button" className="btn-tertiary" onClick={() => navigate(-1)} disabled={submitting}>Cancel</button>
-          <button type="submit" className="btn-primary" disabled={submitting}>{submitting ? "Saving..." : "Save Changes"}</button>
+        <div className="form-actions" style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+          <button type="button" onClick={() => navigate(-1)} disabled={submitting} style={{ flex: 1, padding: '14px', borderRadius: '50px', border: '1px solid #e2d5c8', background: 'transparent', color: '#8c6b5d', fontWeight: '700', cursor: 'pointer' }}>Cancel</button>
+          <button type="submit" disabled={submitting} style={{ 
+            flex: 2, 
+            padding: '14px', 
+            borderRadius: '50px', 
+            border: 'none', 
+            background: 'linear-gradient(90deg, #d4a373 0%, #b28d7f 100%)', 
+            color: '#fff', 
+            fontWeight: '700', 
+            cursor: 'pointer',
+            boxShadow: '0 10px 20px rgba(212, 163, 115, 0.2)'
+          }}>
+            {submitting ? "Saving..." : "Save Changes"}
+          </button>
         </div>
       </form>
     </div>

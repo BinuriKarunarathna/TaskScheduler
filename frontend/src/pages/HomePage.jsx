@@ -27,7 +27,7 @@ const HomePage = () => {
         margin: '0',
         letterSpacing: '-1px'
       }}>
-        Smart Task Scheduler
+        MyScheduler
       </h1>
       <h3 style={{ 
         fontSize: '1.2rem', 
@@ -35,8 +35,7 @@ const HomePage = () => {
         fontStyle: 'italic', 
         margin: '-20px 0 10px 0',
         fontWeight: '500',
-        letterSpacing: '2px',
-        textTransform: 'uppercase'
+        letterSpacing: '2px'
       }}>
         with Resource Optimization
       </h3>

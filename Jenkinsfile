@@ -98,6 +98,11 @@
 pipeline {
     agent any
 
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
     environment {
         DOCKERHUB_USER = 'your_dockerhub_username'
         BACKEND_IMAGE  = 'taskmanager-backend'
@@ -112,6 +117,13 @@ pipeline {
             }
         }
 
+        stage('Docker Test') {
+            steps {
+                bat 'docker --version'
+                bat 'docker ps'
+            }
+        }
+
         stage('Docker Login') {
             steps {
                 withCredentials([
@@ -121,25 +133,27 @@ pipeline {
                         passwordVariable: 'DOCKER_PASS'
                     )
                 ]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    bat '''
+                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                    '''
                 }
             }
         }
 
         stage('Build & Push Backend') {
             steps {
-                sh '''
-                docker build -t $DOCKERHUB_USER/$BACKEND_IMAGE:latest ./backend
-                docker push $DOCKERHUB_USER/$BACKEND_IMAGE:latest
+                bat '''
+                docker build -t %DOCKERHUB_USER%/%BACKEND_IMAGE%:latest backend
+                docker push %DOCKERHUB_USER%/%BACKEND_IMAGE%:latest
                 '''
             }
         }
 
         stage('Build & Push Frontend') {
             steps {
-                sh '''
-                docker build -t $DOCKERHUB_USER/$FRONTEND_IMAGE:latest ./frontend
-                docker push $DOCKERHUB_USER/$FRONTEND_IMAGE:latest
+                bat '''
+                docker build -t %DOCKERHUB_USER%/%FRONTEND_IMAGE%:latest frontend
+                docker push %DOCKERHUB_USER%/%FRONTEND_IMAGE%:latest
                 '''
             }
         }
@@ -150,7 +164,7 @@ pipeline {
             echo "✅ CI completed successfully"
         }
         always {
-            sh 'docker image prune -f || true'
+            bat 'docker image prune -f'
         }
     }
 }
