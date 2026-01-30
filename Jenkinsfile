@@ -107,12 +107,13 @@ pipeline {
         DOCKERHUB_USER = 'binuri1234'
         BACKEND_IMAGE  = 'taskmanager-backend'
         FRONTEND_IMAGE = 'taskmanager-frontend'
+        DEPLOY_USER = 'ec2-user'
+        DEPLOY_HOST = '13.235.8.85'   // App EC2 public IP
+        DEPLOY_PATH = '/home/ec2-user/TaskScheduler'
+
+
     }
-    DEPLOY_USER = 'ec2-user'
-    DEPLOY_HOST = '13.235.8.85'   // App EC2 public IP
-    DEPLOY_PATH = '/home/ec2-user/TaskScheduler'
-
-
+    
     stages {
 
         stage('Checkout') {
