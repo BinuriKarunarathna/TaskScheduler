@@ -1,84 +1,57 @@
 pipeline {
     agent any
 
-    options {
-        timestamps()
-        disableConcurrentBuilds()
-    }
-
     environment {
-        DOCKERHUB_USER = 'binuri1234'
+        DOCKER_USER    = 'binuri1234'
         BACKEND_IMAGE  = 'taskmanager-backend'
         FRONTEND_IMAGE = 'taskmanager-frontend'
-        IMAGE_TAG      = "${BUILD_NUMBER}"
-
-        DEPLOY_USER = 'ec2-user'
-        DEPLOY_HOST = '13.235.8.85'
-        DEPLOY_PATH = '/home/ec2-user/TaskScheduler'
+        IMAGE_TAG      = 'latest'
+        EC2_HOST       = '13.235.8.85'
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/BinuriKarunarathna/TaskScheduler.git'
             }
         }
 
-        stage('Docker Test') {
-            steps {
-                sh 'docker --version'
-                sh 'docker ps'
-            }
-        }
-
-        stage('Docker Login') {
+        stage('Build & Push') {
             steps {
                 withCredentials([
                     usernamePassword(
                         credentialsId: 'dockerhub-credentials',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
                     sh '''
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                    
+                    # Build and Tag
+                    docker build -t $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG backend
+                    docker build -t $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG frontend
+                    
+                    # Push
+                    docker push $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG
+                    docker push $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG
                     '''
                 }
-            }
-        }
-
-        stage('Build & Push Backend') {
-            steps {
-                sh '''
-                docker build -t $DOCKERHUB_USER/$BACKEND_IMAGE:$IMAGE_TAG -t $DOCKERHUB_USER/$BACKEND_IMAGE:latest backend
-                docker push $DOCKERHUB_USER/$BACKEND_IMAGE:$IMAGE_TAG
-                docker push $DOCKERHUB_USER/$BACKEND_IMAGE:latest
-                '''
-            }
-        }
-
-        stage('Build & Push Frontend') {
-            steps {
-                sh '''
-                docker build -t $DOCKERHUB_USER/$FRONTEND_IMAGE:$IMAGE_TAG -t $DOCKERHUB_USER/$FRONTEND_IMAGE:latest frontend
-                docker push $DOCKERHUB_USER/$FRONTEND_IMAGE:$IMAGE_TAG
-                docker push $DOCKERHUB_USER/$FRONTEND_IMAGE:latest
-                '''
             }
         }
 
         stage('Deploy to EC2') {
             steps {
                 sshagent(['ec2-ssh-key']) {
-                    sh '''
-                    ssh -o StrictHostKeyChecking=no ec2-user@13.235.8.85 "
-                        cd /home/ec2-user/TaskScheduler &&
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ec2-user@$EC2_HOST "
+                        cd ~/TaskScheduler &&
                         git pull origin main &&
-                        docker-compose down &&
-                        docker-compose up -d --build
+                        docker-compose pull &&
+                        docker-compose up -d
                     "
-                    '''
+                    """
                 }
             }
         }
@@ -86,10 +59,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ CI/CD completed successfully"
+            echo '✅ CI/CD Pipeline completed successfully'
         }
-        always {
-            sh 'docker image prune -f || true'
+        failure {
+            echo '❌ Pipeline failed'
         }
     }
 }
