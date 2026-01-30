@@ -33,28 +33,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    command: ["npx", "nodemon", "server.js"]
-    stdin_open: true
-    tty: true
+    restart: always
 
   frontend:
     build: ./frontend
     container_name: devops-frontend
     ports:
-      - "3001:3000"
+      - "3001:80"
     depends_on:
       - backend
-    environment:
-      - REACT_APP_API_URL=http://13.235.8.85:5000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    command: ["npm", "start"]
-    stdin_open: true
-    tty: true
+    restart: always
 
 volumes:
   db_data:

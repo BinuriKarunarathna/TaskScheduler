@@ -51,8 +51,9 @@ pipeline {
         stage('Build & Push Backend') {
             steps {
                 sh '''
-                docker build -t $DOCKERHUB_USER/$BACKEND_IMAGE:$IMAGE_TAG backend
+                docker build -t $DOCKERHUB_USER/$BACKEND_IMAGE:$IMAGE_TAG -t $DOCKERHUB_USER/$BACKEND_IMAGE:latest backend
                 docker push $DOCKERHUB_USER/$BACKEND_IMAGE:$IMAGE_TAG
+                docker push $DOCKERHUB_USER/$BACKEND_IMAGE:latest
                 '''
             }
         }
@@ -60,8 +61,9 @@ pipeline {
         stage('Build & Push Frontend') {
             steps {
                 sh '''
-                docker build -t $DOCKERHUB_USER/$FRONTEND_IMAGE:$IMAGE_TAG frontend
+                docker build -t $DOCKERHUB_USER/$FRONTEND_IMAGE:$IMAGE_TAG -t $DOCKERHUB_USER/$FRONTEND_IMAGE:latest frontend
                 docker push $DOCKERHUB_USER/$FRONTEND_IMAGE:$IMAGE_TAG
+                docker push $DOCKERHUB_USER/$FRONTEND_IMAGE:latest
                 '''
             }
         }
@@ -72,8 +74,9 @@ pipeline {
                     sh '''
                     ssh -o StrictHostKeyChecking=no ec2-user@13.235.8.85 "
                         cd /home/ec2-user/TaskScheduler &&
-                        docker-compose pull &&
-                        docker-compose up -d
+                        git pull origin main &&
+                        docker-compose down &&
+                        docker-compose up -d --build
                     "
                     '''
                 }
