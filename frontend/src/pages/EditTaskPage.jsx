@@ -21,7 +21,7 @@ const EditTaskPage = () => {
     return localStorage.getItem("username") || sessionStorage.getItem("username");
   }, []);
 
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const API_URL = process.env.REACT_APP_API_URL || "http://13.235.8.85:5000";
 
   useEffect(() => {
     const fetchTask = async () => {

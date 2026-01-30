@@ -7,7 +7,7 @@ import {useNavigate} from "react-router-dom";
 function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const API_URL = process.env.REACT_APP_API_URL || "http://13.235.8.85:5000";
   const navigate = useNavigate();
   const login = async () => {
     try {
