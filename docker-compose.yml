@@ -27,8 +27,8 @@ services:
       - "5000:5000"
     environment:
       DB_HOST: db
-      DB_USER: root
-      DB_PASSWORD: 1234
+      DB_USER: devapp
+      DB_PASSWORD: devpass
       DB_NAME: devops
     depends_on:
       db:
