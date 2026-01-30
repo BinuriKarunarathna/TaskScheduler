@@ -1,13 +1,12 @@
 const mysql = require("mysql2");
 
-// Resolve DB host dynamically
-const explicitHost = process.env.DB_HOST;
-let resolvedHost = explicitHost || "localhost"; // default for local
+// Resolve DB host dynamically - prefer environment variable
+const resolvedHost = process.env.DB_HOST || "localhost";
 
-// If running inside Docker, prefer "devops-db"
-if (!explicitHost && process.env.DOCKER && process.env.DOCKER.toLowerCase() === "true") {
-  resolvedHost = "devops-db";
-}
+console.log(`🔍 DB Configuration:`);
+console.log(`   Host: ${resolvedHost}`);
+console.log(`   User: ${process.env.DB_USER || "root"}`);
+console.log(`   DB:   ${process.env.DB_NAME || "devops"}`);
 
 const pool = mysql.createPool({
   host: resolvedHost,
