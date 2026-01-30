@@ -15,11 +15,11 @@ const HomePage = () => {
         productivity.
       </p>
 
-      <div className="features">
-        <p>✨ Add tasks with deadlines & priority levels</p>
-        <p>✨ Automatically get a recommended schedule</p>
-        <p>✨ Visualize everything in a clear timeline</p>
-        <p>✨ Stay on track with progress monitoring</p>
+      <div className="features" style={{ textAlign: 'center', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <p style={{ paddingLeft: 0, position: 'static' }}>✨ Add tasks with deadlines & priority levels</p>
+        <p style={{ paddingLeft: 0, position: 'static' }}>✨ Automatically get a recommended schedule</p>
+        <p style={{ paddingLeft: 0, position: 'static' }}>✨ Visualize everything in a clear timeline</p>
+        <p style={{ paddingLeft: 0, position: 'static' }}>✨ Stay on track with progress monitoring</p>
       </div>
 
       <button className="get-started-btn" onClick={() => navigate('/tasks/new')}>Get Started</button>

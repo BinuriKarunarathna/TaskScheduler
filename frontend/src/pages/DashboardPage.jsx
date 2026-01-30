@@ -90,7 +90,6 @@ const DashboardPage = () => {
 
       <section className="actions-row">
         <button className="btn-primary" onClick={() => navigate("/home")}>Plan New Schedule</button>
-        <button className="btn-secondary">View Timeline</button>
         <button className="btn-tertiary" onClick={() => navigate("/tasks")}>Manage Tasks</button>
       </section>
     </div>

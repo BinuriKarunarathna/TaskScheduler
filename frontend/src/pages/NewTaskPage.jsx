@@ -39,13 +39,13 @@ const NewTaskPage = () => {
 
   return (
     <div className="task-form">
-      <header className="dash-header" style={{ paddingTop: 0 }}>
+      {/* <header className="dash-header" style={{ paddingTop: 0 }}>
         <div>
           <h1>Create a New Task <span className="wave">📝</span></h1>
           <p className="muted">Add details below and plan it into your schedule.</p>
         </div>
         <button className="btn-outline" onClick={() => navigate(-1)}>Back</button>
-      </header>
+      </header> */}
 
       <form onSubmit={onSubmit}>
         <div className="form-row">

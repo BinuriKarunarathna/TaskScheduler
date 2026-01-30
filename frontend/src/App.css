@@ -394,9 +394,22 @@ body:has(.dashboard) {
   border-radius: 20px;
   margin-top: 40px;
 }
-  75% { transform: rotate(10deg); }
-  100% { transform: rotate(0deg); }
+ @keyframes wobble {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
+
+
 .username-highlight {
   background: linear-gradient(90deg,#ffb347,#fc5c7d);
   -webkit-background-clip: text;

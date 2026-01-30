@@ -51,7 +51,7 @@ const ManageTasksPage = () => {
           <h1>Manage Your Tasks <span className="wave">📋</span></h1>
           <p className="muted">Update or remove your scheduled activities here.</p>
         </div>
-        <button className="btn-outline" onClick={() => navigate("/dashboard")}>Back to Dash</button>
+        <button className="btn-outline" onClick={() => navigate("/dashboard")}>Back to Dashboard</button>
       </header>
 
       {loading ? (
