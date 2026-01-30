@@ -14,7 +14,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysql", "-u", "root", "-p1234", "-e", "SELECT 1"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p1234"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,6 +27,7 @@ services:
       - "5000:5000"
     environment:
       DB_HOST: db
+      DB_PORT: 3306
       DB_USER: devapp
       DB_PASSWORD: devpass
       DB_NAME: devops
