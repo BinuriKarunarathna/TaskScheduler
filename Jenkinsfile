@@ -10,6 +10,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
@@ -17,23 +18,21 @@ pipeline {
             }
         }
 
-        stage('Build & Push') {
+        stage('Build & Push Docker Images') {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'dockerhub-credentials',
+                        credentialsId: 'dockerhub-creds',   // ✅ FIXED
                         usernameVariable: 'DOCKER_USERNAME',
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
                     sh '''
                     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                    
-                    # Build and Tag
+
                     docker build -t $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG backend
                     docker build -t $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG frontend
-                    
-                    # Push
+
                     docker push $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG
                     docker push $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG
                     '''
@@ -45,12 +44,11 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@$EC2_HOST "
+                    ssh -o StrictHostKeyChecking=no ec2-user@$EC2_HOST '
                         cd ~/TaskScheduler &&
-                        git pull origin main &&
                         docker-compose pull &&
                         docker-compose up -d
-                    "
+                    '
                     """
                 }
             }
