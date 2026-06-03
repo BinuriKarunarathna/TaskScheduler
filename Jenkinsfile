@@ -6,7 +6,7 @@ pipeline {
         BACKEND_IMAGE  = 'taskmanager-backend'
         FRONTEND_IMAGE = 'taskmanager-frontend'
         IMAGE_TAG      = 'latest'
-        EC2_HOST       = '13.235.8.85'
+        EC2_HOST = '51.20.6.184'
     }
 
     stages {
@@ -44,7 +44,7 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@$EC2_HOST "
+                    ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST "
                         cd ~/TaskScheduler &&
                         git pull origin main &&
                         docker-compose down &&

@@ -292,7 +292,9 @@ output "app_server_public_ip" {
 
 output "rds_endpoint" {
   value = aws_db_instance.mysql.endpoint
+  
 }
+
 
 output "ecr_repository_frontend" {
   value = aws_ecr_repository.frontend.repository_url
