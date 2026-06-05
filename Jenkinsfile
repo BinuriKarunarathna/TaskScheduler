@@ -89,6 +89,9 @@ pipeline {
         }
 
         stage('Build & Push Docker Images') {
+            environment {
+                DOCKER_BUILDKIT = '1'
+            }
             steps {
                 withCredentials([
                     usernamePassword(
@@ -97,15 +100,20 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
-                    sh '''
-                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                    sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
 
-                        docker build -t $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG ./backend
-                        docker build -t $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG ./frontend
-
-                        docker push $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG
-                        docker push $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG
-                    '''
+                    script {
+                        parallel(
+                            'backend': {
+                                sh 'docker build -t $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG ./backend'
+                                sh 'docker push $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG'
+                            },
+                            'frontend': {
+                                sh 'docker build -t $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG ./frontend'
+                                sh 'docker push $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG'
+                            }
+                        )
+                    }
                 }
             }
         }
