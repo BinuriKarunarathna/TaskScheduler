@@ -76,7 +76,7 @@ pipeline {
         BACKEND_IMAGE  = 'taskmanager-backend'
         FRONTEND_IMAGE = 'taskmanager-frontend'
         IMAGE_TAG      = 'latest'
-        EC2_HOST       = '51.20.6.184'  // ⚠️ Use Elastic IP to keep this stable
+        EC2_HOST       = '16.171.171.103'  // ⚠️ Use Elastic IP to keep this stable
     }
 
     stages {
