@@ -89,9 +89,6 @@ pipeline {
         }
 
         stage('Build & Push Docker Images') {
-            environment {
-                DOCKER_BUILDKIT = '1'
-            }
             steps {
                 withCredentials([
                     usernamePassword(
