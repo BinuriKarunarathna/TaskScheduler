@@ -71,20 +71,27 @@
 pipeline {
     agent any
 
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
     environment {
         DOCKER_USER    = 'binuri1234'
         BACKEND_IMAGE  = 'taskmanager-backend'
         FRONTEND_IMAGE = 'taskmanager-frontend'
         IMAGE_TAG      = 'latest'
-        EC2_HOST       = '16.171.171.103'  // ⚠️ Use Elastic IP to keep this stable
+        EC2_HOST       = '16.171.171.103'
     }
 
     stages {
 
         stage('Checkout Code') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/BinuriKarunarathna/TaskScheduler.git'
+                timeout(time: 2, unit: 'MINUTES') {
+                    git branch: 'main',
+                        url: 'https://github.com/BinuriKarunarathna/TaskScheduler.git'
+                }
             }
         }
 
@@ -102,12 +109,16 @@ pipeline {
                     script {
                         parallel(
                             'backend': {
-                                sh 'docker build -t $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG ./backend'
-                                sh 'docker push $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG'
+                                timeout(time: 15, unit: 'MINUTES') {
+                                    sh 'docker build -t $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG ./backend'
+                                    sh 'docker push $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG'
+                                }
                             },
                             'frontend': {
-                                sh 'docker build -t $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG ./frontend'
-                                sh 'docker push $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG'
+                                timeout(time: 15, unit: 'MINUTES') {
+                                    sh 'docker build -t $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG ./frontend'
+                                    sh 'docker push $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG'
+                                }
                             }
                         )
                     }
@@ -117,16 +128,18 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                sshagent(['ec2-ssh-key']) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} '
-                            cd ~/TaskScheduler &&
-                            git pull origin main &&
-                            docker-compose down &&
-                            docker-compose pull &&
-                            docker-compose up -d --remove-orphans
-                        '
-                    """
+                timeout(time: 5, unit: 'MINUTES') {
+                    sshagent(['ec2-ssh-key']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 ubuntu@${EC2_HOST} '
+                                cd ~/TaskScheduler &&
+                                git pull origin main &&
+                                docker-compose down &&
+                                docker-compose pull &&
+                                docker-compose up -d --remove-orphans
+                            '
+                        """
+                    }
                 }
             }
         }
