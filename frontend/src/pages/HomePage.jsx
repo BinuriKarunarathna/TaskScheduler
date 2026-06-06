@@ -47,7 +47,7 @@ const HomePage = () => {
         maxWidth: '600px', 
         textAlign: 'center' 
       }}>
-        Welcome to <strong>Smart Task Scheduler</strong> – your intelligent
+        Welcome to <strong>Smart Task Scheduler Application</strong> – your intelligent
         assistant that organizes tasks, deadlines, and priorities for maximum
         productivity.
       </p>
