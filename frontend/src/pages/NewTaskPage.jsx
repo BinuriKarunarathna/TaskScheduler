@@ -24,7 +24,7 @@ const NewTaskPage = () => {
     setSubmitting(true);
     setMessage("");
     try {
-      const API_URL = process.env.REACT_APP_API_URL || "http://13.235.8.85:5000";
+      const API_URL = process.env.REACT_APP_API_URL || "http://13.60.190.19:5000";
       const username = localStorage.getItem("username") || sessionStorage.getItem("username");
       const payload = { ...form, username };
   await axios.post(`${API_URL}/api/tasks`, payload);
