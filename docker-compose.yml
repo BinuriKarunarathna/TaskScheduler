@@ -51,7 +51,7 @@ services:
     image: binuri1234/taskmanager-frontend:latest
     container_name: devops-frontend
     ports:
-      - "3001:80"
+      - "80:80"
     depends_on:
       - backend
     restart: always
