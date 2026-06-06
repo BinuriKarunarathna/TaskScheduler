@@ -23,14 +23,21 @@ services:
 
   db:
     image: mysql:8.0
+    container_name: devops-db
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=taskmanager
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_DATABASE=devops
     volumes:
       - db_data:/var/lib/mysql
     restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p1234"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 
 
@@ -41,7 +48,8 @@ services:
       - "5000:5000"
     environment:
       # Use the EC2 Public IP or RDS Endpoint here
-      - DB_HOST=13.235.8.85
+      - DB_HOST=devops-db
+      - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=1234
       - DB_NAME=devops
