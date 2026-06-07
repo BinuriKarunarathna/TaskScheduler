@@ -66,6 +66,9 @@ pipeline {
                         docker-compose down &&
                         docker-compose pull &&
                         docker-compose up -d --remove-orphans
+                        sleep 30 &&
+                        docker exec -i devops-db mysql -u root -p1234 devops < ~/TaskScheduler/db/init/init.sql
+            
                     '
                 """
             }
